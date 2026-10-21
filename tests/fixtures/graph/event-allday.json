@@ -1,0 +1,23 @@
+{
+  "@odata.etag": "W/\"DwAAABYAAABzSvC5sGOWQq0bgr0bDcBjAAAGzR/y\"",
+  "id": "AAMkAGI2AllDay=",
+  "createdDateTime": "2026-09-01T10:00:00Z",
+  "lastModifiedDateTime": "2026-09-01T10:00:00Z",
+  "changeKey": "c0rwubBjlkKtG4K9Gw3AYwAABs0f8g==",
+  "originalStartTimeZone": "GMT Standard Time",
+  "iCalUId": "040000008200E00074C5B7101A82E0080000000011111111",
+  "isReminderOn": false,
+  "reminderMinutesBeforeStart": 1080,
+  "subject": "Bank holiday",
+  "sensitivity": "private",
+  "isAllDay": true,
+  "isCancelled": false,
+  "showAs": "free",
+  "type": "singleInstance",
+  "body": { "contentType": "text", "content": "" },
+  "start": { "dateTime": "2026-12-25T00:00:00.0000000", "timeZone": "UTC" },
+  "end": { "dateTime": "2026-12-26T00:00:00.0000000", "timeZone": "UTC" },
+  "location": { "displayName": "" },
+  "attendees": [],
+  "organizer": { "emailAddress": { "name": "Gaz Cripps", "address": "gaz@contoso.com" } }
+}

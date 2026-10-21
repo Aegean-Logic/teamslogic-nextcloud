@@ -1,0 +1,36 @@
+{
+  "resourceName": "people/c4729281907263981234",
+  "etag": "%EgcBAgkLLjc9GgQBAgUHIgxGWHl0WWdSL1Rqaz0=",
+  "metadata": {
+    "sources": [ { "type": "CONTACT", "id": "419c5d6a0e9d8f12", "etag": "#FXytYgR/Tjk=", "updateTime": "2026-10-02T08:30:12.345Z" } ],
+    "objectType": "PERSON"
+  },
+  "names": [
+    { "metadata": { "primary": true }, "displayName": "Dr Jane Q. Public PhD", "familyName": "Public", "givenName": "Jane", "middleName": "Quinn", "honorificPrefix": "Dr", "honorificSuffix": "PhD", "displayNameLastFirst": "Public, Jane Quinn" }
+  ],
+  "nicknames": [ { "value": "JQ" } ],
+  "photos": [
+    { "metadata": { "primary": true }, "url": "https://lh3.googleusercontent.com/contacts/AB12cdEF=s100" }
+  ],
+  "birthdays": [
+    { "metadata": { "primary": true }, "date": { "month": 5, "day": 17 } }
+  ],
+  "addresses": [
+    { "formattedValue": "1 High Street\nFlat 2\nLondon\nSW1A 1AA\nUK", "type": "home", "formattedType": "Home", "streetAddress": "1 High Street", "extendedAddress": "Flat 2", "city": "London", "postalCode": "SW1A 1AA", "country": "UK", "countryCode": "GB" },
+    { "type": "work", "streetAddress": "10 Market Square", "city": "Bristol", "region": "Avon", "postalCode": "BS1 1AA", "country": "UK" }
+  ],
+  "emailAddresses": [
+    { "metadata": { "primary": true }, "value": "jane@example.com", "type": "home" },
+    { "value": "j.public@contoso.com", "type": "work" }
+  ],
+  "phoneNumbers": [
+    { "value": "+44 7700 900123", "canonicalForm": "+447700900123", "type": "mobile" },
+    { "value": "+44 20 7946 0123", "type": "work" },
+    { "value": "+44 20 7946 0999", "type": "workFax" }
+  ],
+  "organizations": [
+    { "metadata": { "primary": true }, "name": "Contoso Ltd", "department": "Research", "title": "Head of Research" }
+  ],
+  "urls": [ { "value": "https://jane.example.com", "type": "homePage" } ],
+  "biographies": [ { "value": "Met at the 2025 conference.", "contentType": "TEXT_PLAIN" } ]
+}

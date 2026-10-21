@@ -1,0 +1,16 @@
+{
+  "kind": "calendar#event",
+  "etag": "\"3459201234999000\"",
+  "id": "allday0holiday",
+  "status": "confirmed",
+  "created": "2026-09-01T10:00:00.000Z",
+  "updated": "2026-09-01T10:00:00.000Z",
+  "summary": "Team away day",
+  "start": { "date": "2026-11-02" },
+  "end": { "date": "2026-11-04" },
+  "iCalUID": "allday0holiday@google.com",
+  "sequence": 0,
+  "reminders": { "useDefault": true },
+  "transparency": "transparent",
+  "eventType": "default"
+}

@@ -1,0 +1,53 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Aegean Logic
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ */
+#teamslogic-admin h3 {
+	margin-top: 24px;
+	font-weight: bold;
+}
+
+#teamslogic-admin .teamslogic-field {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 12px;
+	margin: 8px 0;
+	max-width: 900px;
+}
+
+#teamslogic-admin .teamslogic-field label {
+	min-width: 220px;
+}
+
+#teamslogic-admin .teamslogic-field input[type=text],
+#teamslogic-admin .teamslogic-field input[type=password] {
+	flex: 1 1 360px;
+	max-width: 560px;
+}
+
+#teamslogic-admin .teamslogic-field input[type=number] {
+	width: 100px;
+}
+
+#teamslogic-admin .teamslogic-field .settings-hint {
+	flex-basis: 100%;
+	margin-left: 232px;
+}
+
+#teamslogic-admin .teamslogic-field--check label {
+	min-width: 0;
+}
+
+#teamslogic-admin .teamslogic-copy {
+	font-family: monospace;
+}
+
+#teamslogic-admin button[type=submit] {
+	margin-top: 16px;
+}
+
+#teamslogic-admin .teamslogic-status {
+	margin-left: 12px;
+	color: var(--color-text-maxcontrast);
+}

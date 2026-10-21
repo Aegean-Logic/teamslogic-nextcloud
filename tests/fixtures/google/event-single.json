@@ -1,0 +1,44 @@
+{
+  "kind": "calendar#event",
+  "etag": "\"3459201234567000\"",
+  "id": "7l4bq0abc123single",
+  "status": "confirmed",
+  "htmlLink": "https://www.google.com/calendar/event?eid=N2w0YnEwYWJjMTIzc2luZ2xl",
+  "created": "2026-10-01T10:15:00.000Z",
+  "updated": "2026-10-02T08:30:12.345Z",
+  "summary": "Quarterly planning",
+  "description": "Agenda:\n1. Numbers\n2. Hiring",
+  "location": "Board room",
+  "colorId": "5",
+  "creator": { "email": "gaz@example.com", "self": true },
+  "organizer": { "email": "gaz@example.com", "displayName": "Gaz Cripps", "self": true },
+  "start": { "dateTime": "2026-10-21T09:00:00+01:00", "timeZone": "Europe/London" },
+  "end": { "dateTime": "2026-10-21T10:30:00+01:00", "timeZone": "Europe/London" },
+  "iCalUID": "7l4bq0abc123single@google.com",
+  "sequence": 2,
+  "attendees": [
+    { "email": "gaz@example.com", "displayName": "Gaz Cripps", "organizer": true, "self": true, "responseStatus": "accepted" },
+    { "email": "alice@example.org", "displayName": "Alice Smith", "responseStatus": "tentative" },
+    { "email": "bob@example.org", "responseStatus": "needsAction", "optional": true },
+    { "email": "c_1888boardroom@resource.calendar.google.com", "displayName": "Board room", "resource": true, "responseStatus": "accepted" }
+  ],
+  "hangoutLink": "https://meet.google.com/abc-defg-hij",
+  "conferenceData": {
+    "entryPoints": [
+      { "entryPointType": "video", "uri": "https://meet.google.com/abc-defg-hij", "label": "meet.google.com/abc-defg-hij" },
+      { "entryPointType": "phone", "uri": "tel:+44-20-3957-1234", "pin": "123456789" }
+    ],
+    "conferenceSolution": { "key": { "type": "hangoutsMeet" }, "name": "Google Meet" },
+    "conferenceId": "abc-defg-hij"
+  },
+  "reminders": {
+    "useDefault": false,
+    "overrides": [
+      { "method": "popup", "minutes": 10 },
+      { "method": "email", "minutes": 1440 }
+    ]
+  },
+  "transparency": "opaque",
+  "visibility": "private",
+  "eventType": "default"
+}

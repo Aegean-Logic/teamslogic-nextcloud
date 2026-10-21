@@ -1,0 +1,32 @@
+{
+	"name": "aegean-logic/teamslogic-nextcloud",
+	"description": "TeamsLogic for Nextcloud: Google and Microsoft 365 calendar, contacts and mail",
+	"license": "AGPL-3.0-or-later",
+	"type": "project",
+	"autoload": {
+		"psr-4": {
+			"OCA\\TeamsLogic\\": "lib/"
+		}
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"OCA\\TeamsLogic\\Tests\\": "tests/"
+		}
+	},
+	"require": {
+		"php": ">=8.2"
+	},
+	"require-dev": {
+		"phpunit/phpunit": "^11.5",
+		"sabre/vobject": "^4.5"
+	},
+	"config": {
+		"platform": {
+			"php": "8.2"
+		},
+		"sort-packages": true
+	},
+	"scripts": {
+		"test": "phpunit"
+	}
+}

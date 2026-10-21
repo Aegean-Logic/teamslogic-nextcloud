@@ -1,0 +1,10 @@
+version = 1
+SPDX-PackageName = "teamslogic-nextcloud"
+SPDX-PackageSupplier = "Aegean Logic <info@aegeanlogic.co.uk>"
+SPDX-PackageDownloadLocation = "https://github.com/Aegean-Logic/teamslogic-nextcloud"
+
+[[annotations]]
+path = ["tests/fixtures/**", "composer.json", "composer.lock", "phpunit.xml", ".gitignore", "README.md"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Aegean Logic"
+SPDX-License-Identifier = "AGPL-3.0-or-later"

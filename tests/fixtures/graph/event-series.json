@@ -1,0 +1,55 @@
+{
+  "@odata.etag": "W/\"DwAAABYAAABzSvC5sGOWQq0bgr0bDcBjAAAGzSAA\"",
+  "id": "AAMkSeriesMaster=",
+  "createdDateTime": "2026-09-01T09:00:00Z",
+  "lastModifiedDateTime": "2026-10-10T12:00:00Z",
+  "changeKey": "c0rwubBjlkKtG4K9Gw3AYwAABs0gAA==",
+  "originalStartTimeZone": "GMT Standard Time",
+  "originalEndTimeZone": "GMT Standard Time",
+  "iCalUId": "040000008200E00074C5B7101A82E00800000000SERIES",
+  "isReminderOn": true,
+  "reminderMinutesBeforeStart": 5,
+  "subject": "Stand-up",
+  "sensitivity": "normal",
+  "isAllDay": false,
+  "isCancelled": false,
+  "showAs": "busy",
+  "type": "seriesMaster",
+  "body": { "contentType": "text", "content": "Daily sync" },
+  "start": { "dateTime": "2026-10-05T08:30:00.0000000", "timeZone": "UTC" },
+  "end": { "dateTime": "2026-10-05T08:45:00.0000000", "timeZone": "UTC" },
+  "location": { "displayName": "Teams" },
+  "recurrence": {
+    "pattern": { "type": "weekly", "interval": 1, "month": 0, "dayOfMonth": 0, "daysOfWeek": ["monday", "wednesday", "friday"], "firstDayOfWeek": "monday", "index": "first" },
+    "range": { "type": "endDate", "startDate": "2026-10-05", "endDate": "2026-12-21", "recurrenceTimeZone": "GMT Standard Time", "numberOfOccurrences": 0 }
+  },
+  "attendees": [],
+  "organizer": { "emailAddress": { "name": "Gaz Cripps", "address": "gaz@contoso.com" } },
+  "cancelledOccurrences": [
+    "OID.AAMkSeriesMaster=.2026-10-12"
+  ],
+  "exceptionOccurrences": [
+    {
+      "id": "AAMkException1=",
+      "type": "exception",
+      "seriesMasterId": "AAMkSeriesMaster=",
+      "originalStart": "2026-10-14T08:30:00Z",
+      "lastModifiedDateTime": "2026-10-11T08:00:00Z",
+      "originalStartTimeZone": "GMT Standard Time",
+      "iCalUId": "040000008200E00074C5B7101A82E00807EA0A0E00000000SERIES",
+      "subject": "Stand-up (longer: demo)",
+      "isAllDay": false,
+      "isCancelled": false,
+      "isReminderOn": true,
+      "reminderMinutesBeforeStart": 5,
+      "showAs": "busy",
+      "sensitivity": "normal",
+      "body": { "contentType": "text", "content": "Daily sync" },
+      "start": { "dateTime": "2026-10-14T09:00:00.0000000", "timeZone": "UTC" },
+      "end": { "dateTime": "2026-10-14T09:30:00.0000000", "timeZone": "UTC" },
+      "location": { "displayName": "Teams" },
+      "attendees": [],
+      "organizer": { "emailAddress": { "name": "Gaz Cripps", "address": "gaz@contoso.com" } }
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "kind": "calendar#events",
+  "etag": "\"p33c9rlbbe6ofk0g\"",
+  "summary": "Work",
+  "timeZone": "Europe/London",
+  "accessRole": "owner",
+  "defaultReminders": [ { "method": "popup", "minutes": 10 } ],
+  "nextSyncToken": "CPDAlvWDx70CEPDAlvWDx70CGAU=",
+  "items": [
+    {
+      "kind": "calendar#event",
+      "etag": "\"3459300000000000\"",
+      "id": "weekly1standup",
+      "status": "confirmed",
+      "created": "2026-09-01T09:00:00.000Z",
+      "updated": "2026-10-10T12:00:00.000Z",
+      "summary": "Stand-up",
+      "organizer": { "email": "gaz@example.com", "self": true },
+      "start": { "dateTime": "2026-10-05T09:30:00+01:00", "timeZone": "Europe/London" },
+      "end": { "dateTime": "2026-10-05T09:45:00+01:00", "timeZone": "Europe/London" },
+      "recurrence": [
+        "RRULE:FREQ=WEEKLY;WKST=MO;UNTIL=20261221T235959Z;BYDAY=MO,WE,FR",
+        "EXDATE;TZID=Europe/London:20261012T093000"
+      ],
+      "iCalUID": "weekly1standup@google.com",
+      "sequence": 1,
+      "reminders": { "useDefault": true }
+    },
+    {
+      "kind": "calendar#event",
+      "etag": "\"3459300000000111\"",
+      "id": "weekly1standup_20261014T083000Z",
+      "status": "confirmed",
+      "created": "2026-09-01T09:00:00.000Z",
+      "updated": "2026-10-11T08:00:00.000Z",
+      "summary": "Stand-up (longer: demo)",
+      "organizer": { "email": "gaz@example.com", "self": true },
+      "start": { "dateTime": "2026-10-14T10:00:00+01:00", "timeZone": "Europe/London" },
+      "end": { "dateTime": "2026-10-14T10:30:00+01:00", "timeZone": "Europe/London" },
+      "recurringEventId": "weekly1standup",
+      "originalStartTime": { "dateTime": "2026-10-14T09:30:00+01:00", "timeZone": "Europe/London" },
+      "iCalUID": "weekly1standup@google.com",
+      "sequence": 1,
+      "reminders": { "useDefault": true }
+    },
+    {
+      "kind": "calendar#event",
+      "etag": "\"3459300000000222\"",
+      "id": "weekly1standup_20261016T083000Z",
+      "status": "cancelled",
+      "recurringEventId": "weekly1standup",
+      "originalStartTime": { "dateTime": "2026-10-16T09:30:00+01:00", "timeZone": "Europe/London" }
+    }
+  ]
+}

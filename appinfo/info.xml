@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<!--
+  - SPDX-FileCopyrightText: 2026 Aegean Logic
+  - SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+<info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+	<id>teamslogic</id>
+	<name>TeamsLogic</name>
+	<summary>Google and Microsoft 365 calendars, contacts and mail in Nextcloud</summary>
+	<description><![CDATA[TeamsLogic for Nextcloud is the server side of the TeamsLogic desktop app. Each user connects their Google or Microsoft 365 account once: their calendars and address books sync both ways with Nextcloud (every few minutes, or on demand), and the same sign-in sets up the account in Nextcloud Mail.]]></description>
+	<version>0.1.1</version>
+	<licence>agpl</licence>
+	<author homepage="https://www.aegeanlogic.co.uk">Aegean Logic</author>
+	<namespace>TeamsLogic</namespace>
+	<category>groupware</category>
+	<category>integration</category>
+	<dependencies>
+		<php min-version="8.2"/>
+		<nextcloud min-version="32" max-version="35"/>
+	</dependencies>
+	<background-jobs>
+		<job>OCA\TeamsLogic\Sync\SyncJob</job>
+	</background-jobs>
+	<settings>
+		<admin>OCA\TeamsLogic\Settings\Admin</admin>
+	</settings>
+</info>

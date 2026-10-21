@@ -1,0 +1,21 @@
+{
+  "@odata.etag": "W/\"xzyPKP0BiUGgld+lMKXwbQAACaU8DA==\"",
+  "importance": "high",
+  "isReminderOn": true,
+  "status": "waitingOnOthers",
+  "title": "Book the venue",
+  "createdDateTime": "2026-10-19T08:00:00.1234567Z",
+  "lastModifiedDateTime": "2026-10-20T16:45:12.7654321Z",
+  "hasAttachments": false,
+  "categories": ["Events"],
+  "id": "AAMkADExampleTaskId=",
+  "body": {
+    "content": "<html><body><p>Ask about&nbsp;catering &amp; parking.</p></body></html>",
+    "contentType": "html"
+  },
+  "dueDateTime": { "dateTime": "2026-10-30T00:00:00.0000000", "timeZone": "UTC" },
+  "startDateTime": { "dateTime": "2026-10-22T00:00:00.0000000", "timeZone": "UTC" },
+  "reminderDateTime": { "dateTime": "2026-10-29T09:00:00.0000000", "timeZone": "UTC" },
+  "linkedResources": [],
+  "checklistItems": []
+}

@@ -63,11 +63,24 @@ class GraphCalendarApi implements RemoteApi {
 			$page = $this->http->request('GET', $url)['json'] ?? [];
 			foreach ((array)($page['value'] ?? []) as $c) {
 				$color = isset($c['hexColor']) && $c['hexColor'] !== '' ? (string)$c['hexColor'] : null;
-				$out[] = new RemoteCollection((string)$c['id'], (string)($c['name'] ?? 'Calendar'), empty($c['canEdit']), $color);
+				$out[] = new RemoteCollection((string)$c['id'], (string)($c['name'] ?? 'Calendar'), empty($c['canEdit']), $color, null, self::meetingProvider($c));
 			}
 			$url = $page['@odata.nextLink'] ?? null;
 		}
 		return $out;
+	}
+
+	/** The calendar's online meeting provider: its default if allowed, else the first allowed. */
+	private static function meetingProvider(array $calendar): ?string {
+		$allowed = array_values(array_filter(
+			array_map('strval', (array)($calendar['allowedOnlineMeetingProviders'] ?? [])),
+			static fn ($p) => $p !== 'unknown' && $p !== '',
+		));
+		$default = (string)($calendar['defaultOnlineMeetingProvider'] ?? '');
+		if (in_array($default, $allowed, true)) {
+			return $default;
+		}
+		return $allowed[0] ?? null;
 	}
 
 	public function changes(RemoteCollection $collection, ?string $token): ChangeSet {
@@ -159,7 +172,7 @@ class GraphCalendarApi implements RemoteApi {
 	public function create(RemoteCollection $collection, string $local): RemoteItem {
 		$cal = ICal::parse($local);
 		$master = ICal::masterOf($cal) ?? throw new RemoteException('No event in the calendar object');
-		$created = $this->http->request('POST', self::V1 . '/me/calendars/' . rawurlencode($collection->id) . '/events', $this->converter->fromEvent($master))['json'] ?? [];
+		$created = $this->http->request('POST', self::V1 . '/me/calendars/' . rawurlencode($collection->id) . '/events', $this->converter->fromEvent($master, $collection->meetingProvider))['json'] ?? [];
 		$id = (string)($created['id'] ?? throw new RemoteException('Graph returned no event id'));
 		$etag = $this->pushOccurrences($id, $cal) ?? (string)($created['@odata.etag'] ?? '');
 		return new RemoteItem($id, $etag);
@@ -169,7 +182,7 @@ class GraphCalendarApi implements RemoteApi {
 		$cal = ICal::parse($local);
 		$master = ICal::masterOf($cal) ?? throw new RemoteException('No event in the calendar object');
 		$headers = $etag !== null && $etag !== '' ? ['If-Match' => $etag] : [];
-		$response = $this->http->request('PATCH', self::V1 . '/me/events/' . rawurlencode($id), $this->converter->fromEvent($master), $headers);
+		$response = $this->http->request('PATCH', self::V1 . '/me/events/' . rawurlencode($id), $this->converter->fromEvent($master, $collection->meetingProvider), $headers);
 		if ($response['status'] === 404) {
 			throw new PreconditionFailedException('The event was deleted in Outlook', 404);
 		}

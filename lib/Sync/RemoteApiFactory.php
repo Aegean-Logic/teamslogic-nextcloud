@@ -10,10 +10,13 @@ declare(strict_types=1);
 namespace OCA\TeamsLogic\Sync;
 
 use OCA\TeamsLogic\Db\Connection;
+use OCA\TeamsLogic\OAuth\Providers;
 use OCA\TeamsLogic\Remote\GoogleCalendarApi;
 use OCA\TeamsLogic\Remote\GoogleContactsApi;
+use OCA\TeamsLogic\Remote\GoogleTasksApi;
 use OCA\TeamsLogic\Remote\GraphCalendarApi;
 use OCA\TeamsLogic\Remote\GraphContactsApi;
+use OCA\TeamsLogic\Remote\GraphTasksApi;
 use OCA\TeamsLogic\Remote\Http;
 use OCP\Http\Client\IClientService;
 
@@ -36,6 +39,10 @@ class RemoteApiFactory {
 		}
 		if ($connection->getContactsEnabled()) {
 			$apis[] = $google ? new GoogleContactsApi($http) : new GraphContactsApi($http);
+		}
+		// Only accounts that granted it: those connected before tasks were added sign in again first
+		if ($connection->getTasksEnabled() && Providers::grantsTasks($connection->getProvider(), $connection->getScopeList())) {
+			$apis[] = $google ? new GoogleTasksApi($http) : new GraphTasksApi($http);
 		}
 		return $apis;
 	}

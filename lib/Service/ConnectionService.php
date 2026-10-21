@@ -9,10 +9,13 @@ declare(strict_types=1);
 
 namespace OCA\TeamsLogic\Service;
 
+use OCA\DAV\CalDAV\CalDavBackend;
 use OCA\TeamsLogic\Db\Connection;
 use OCA\TeamsLogic\Db\ConnectionMapper;
+use OCA\TeamsLogic\Db\SyncItem;
 use OCA\TeamsLogic\OAuth\OAuthException;
 use OCA\TeamsLogic\OAuth\OAuthService;
+use OCA\TeamsLogic\OAuth\Providers;
 use OCA\TeamsLogic\Sync\SyncNowJob;
 use OCA\TeamsLogic\Sync\SyncService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -23,7 +26,7 @@ use Psr\Log\LoggerInterface;
 
 /**
  * A user's connections: connecting (with Mail set up from the same sign-in), switching mail,
- * calendars and contacts on and off, syncing now and disconnecting.
+ * calendars, contacts and tasks on and off, syncing now and disconnecting.
  */
 class ConnectionService {
 	public function __construct(
@@ -34,12 +37,13 @@ class ConnectionService {
 		private SyncService $sync,
 		private IJobList $jobs,
 		private IUserManager $users,
+		private CalDavBackend $calDav,
 		private LoggerInterface $logger,
 	) {
 	}
 
 	/**
-	 * @param array{mail?: bool, calendar?: bool, contacts?: bool} $features
+	 * @param array{mail?: bool, calendar?: bool, contacts?: bool, tasks?: bool} $features
 	 * @return array{url: string, state: string, redirectUri: string, scopes: list<string>, mail: bool}
 	 */
 	public function startConnect(IUser $user, string $provider, array $features): array {
@@ -64,6 +68,42 @@ class ConnectionService {
 		return $this->connections->findAllForUser($userId);
 	}
 
+	/**
+	 * The user's synced calendars, by local calendar URI, with the online meeting their provider
+	 * adds to an event that asks for one (ICal::ONLINE_MEETING): "teams" or "meet".
+	 *
+	 * @return list<array{connectionId: int, provider: string, email: string, calendarUri: string, name: string, readOnly: bool, onlineMeeting: ?string}>
+	 */
+	public function calendars(string $userId): array {
+		$out = [];
+		foreach ($this->connections->findAllForUser($userId) as $connection) {
+			if (!$connection->getCalendarEnabled()) {
+				continue;
+			}
+			foreach ((array)($connection->getState()[SyncItem::CALENDAR] ?? []) as $cs) {
+				$calendar = isset($cs['localId']) ? $this->calDav->getCalendarById((int)$cs['localId']) : null;
+				if ($calendar === null || $calendar['principaluri'] !== 'principals/users/' . $userId) {
+					continue;
+				}
+				$meeting = (string)($cs['meeting'] ?? '');
+				$out[] = [
+					'connectionId' => (int)$connection->getId(),
+					'provider' => $connection->getProvider(),
+					'email' => $connection->getAccountEmail(),
+					'calendarUri' => (string)$calendar['uri'],
+					'name' => (string)($cs['name'] ?? ''),
+					'readOnly' => (bool)($cs['readOnly'] ?? false),
+					'onlineMeeting' => match (true) {
+						empty($cs['readOnly']) && $meeting === 'hangoutsMeet' => 'meet',
+						empty($cs['readOnly']) && str_starts_with($meeting, 'teams') => 'teams',
+						default => null,
+					},
+				];
+			}
+		}
+		return $out;
+	}
+
 	/** @throws DoesNotExistException */
 	public function get(string $userId, int $id): Connection {
 		return $this->connections->findForUser($id, $userId);
@@ -73,7 +113,7 @@ class ConnectionService {
 	 * Switches features. Calendars and contacts that are switched off stop syncing and keep their
 	 * local copies; mail switched off removes the Mail account (the mailbox stays at the provider).
 	 *
-	 * @param array{mail?: bool, calendar?: bool, contacts?: bool} $features
+	 * @param array{mail?: bool, calendar?: bool, contacts?: bool, tasks?: bool} $features
 	 * @throws OAuthException mail asked for but not granted ($reconnect)
 	 */
 	public function update(string $userId, int $id, array $features): Connection {
@@ -83,6 +123,12 @@ class ConnectionService {
 		}
 		if (array_key_exists('contacts', $features)) {
 			$connection->setContactsEnabled((bool)$features['contacts']);
+		}
+		if (array_key_exists('tasks', $features)) {
+			if ($features['tasks'] && !Providers::grantsTasks($connection->getProvider(), $connection->getScopeList())) {
+				throw new OAuthException('Tasks were not granted; connect the account again to sync them', true);
+			}
+			$connection->setTasksEnabled((bool)$features['tasks']);
 		}
 		$connection = $this->connections->update($connection);
 		if (array_key_exists('mail', $features) && (bool)$features['mail'] !== (bool)$connection->getMailEnabled()) {

@@ -14,11 +14,13 @@ use Sabre\CalDAV\Xml\Property\SupportedCalendarComponentSet;
 
 /**
  * Synced calendars, through Nextcloud's CalDAV backend (so the Calendar app, activity and
- * CalDAV clients see every change).
+ * CalDAV clients see every change). Task lists are calendars of VTODOs (the Tasks app's lists).
  */
 class LocalCalendarStore implements LocalStore {
 	public function __construct(
 		private CalDavBackend $backend,
+		/** VEVENT for a calendar, VTODO for a task list */
+		private string $component = 'VEVENT',
 	) {
 	}
 
@@ -36,7 +38,7 @@ class LocalCalendarStore implements LocalStore {
 		}
 		$props = [
 			'{DAV:}displayname' => $displayName,
-			'{urn:ietf:params:xml:ns:caldav}supported-calendar-component-set' => new SupportedCalendarComponentSet(['VEVENT']),
+			'{urn:ietf:params:xml:ns:caldav}supported-calendar-component-set' => new SupportedCalendarComponentSet([$this->component]),
 		];
 		if ($color !== null && preg_match('/^#[0-9a-fA-F]{6}$/', $color)) {
 			$props['{http://apple.com/ns/ical/}calendar-color'] = $color;

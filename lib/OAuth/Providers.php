@@ -29,15 +29,19 @@ final class Providers {
 		'email',
 		'https://www.googleapis.com/auth/calendar',
 		'https://www.googleapis.com/auth/contacts',
+		self::GOOGLE_TASKS_SCOPE,
 	];
 	public const GOOGLE_MAIL_SCOPES = ['https://mail.google.com/'];
+	public const GOOGLE_TASKS_SCOPE = 'https://www.googleapis.com/auth/tasks';
 
 	public const GRAPH_SCOPES = [
 		'https://graph.microsoft.com/Calendars.ReadWrite',
 		'https://graph.microsoft.com/Contacts.ReadWrite',
+		self::GRAPH_TASKS_SCOPE,
 		'https://graph.microsoft.com/User.Read',
 		'offline_access',
 	];
+	public const GRAPH_TASKS_SCOPE = 'https://graph.microsoft.com/Tasks.ReadWrite';
 	public const OUTLOOK_MAIL_SCOPES = [
 		'https://outlook.office.com/IMAP.AccessAsUser.All',
 		'https://outlook.office.com/SMTP.Send',
@@ -57,6 +61,26 @@ final class Providers {
 			return $mail ? array_merge(self::GOOGLE_SCOPES, self::GOOGLE_MAIL_SCOPES) : self::GOOGLE_SCOPES;
 		}
 		return $mail ? array_merge(self::GRAPH_SCOPES, self::OUTLOOK_MAIL_SCOPES) : self::GRAPH_SCOPES;
+	}
+
+	/** Whether the granted scopes include tasks (accounts connected before tasks were added don't). */
+	public static function grantsTasks(string $provider, array $granted): bool {
+		$scope = strtolower($provider === Connection::GOOGLE ? self::GOOGLE_TASKS_SCOPE : self::GRAPH_TASKS_SCOPE);
+		return in_array($scope, array_map('strtolower', $granted), true);
+	}
+
+	/**
+	 * The Graph scopes to refresh a token with: those the user granted (Microsoft refuses a refresh
+	 * that asks for one they didn't), or the defaults for a connection that doesn't record them.
+	 *
+	 * @return list<string>
+	 */
+	public static function graphRefreshScopes(array $granted): array {
+		$graph = array_values(array_filter($granted, static fn ($scope) => stripos($scope, 'https://graph.microsoft.com/') === 0));
+		if ($graph === []) {
+			return array_values(array_diff(self::GRAPH_SCOPES, [self::GRAPH_TASKS_SCOPE]));
+		}
+		return array_merge($graph, ['offline_access']);
 	}
 
 	/** Whether the granted scopes include mail. */

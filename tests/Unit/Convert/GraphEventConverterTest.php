@@ -71,6 +71,29 @@ class GraphEventConverterTest extends TestCase {
 		$this->assertArrayNotHasKey('recurrence', $body);
 	}
 
+	public function testTeamsMeeting(): void {
+		$event = $this->converter->toCalendar(Fixtures::json('graph/event-single.json'))->VEVENT;
+		$this->assertSame('teams', (string)$event->{ICal::ONLINE_MEETING});
+		$this->assertStringStartsWith('https://teams.microsoft.com/l/meetup-join/', (string)$event->{ICal::JOIN_URL});
+
+		// Back to Outlook: the meeting stays a Teams meeting; our join line and location aren't sent.
+		$body = $this->converter->fromEvent($event, 'teamsForBusiness');
+		$this->assertTrue($body['isOnlineMeeting']);
+		$this->assertSame('teamsForBusiness', $body['onlineMeetingProvider']);
+		$this->assertSame("Please read the attached figures before the call.\n\nThanks & regards", $body['body']['content']);
+		$this->assertSame('', $body['location']['displayName']);
+	}
+
+	public function testNewEventAsksForATeamsMeeting(): void {
+		$ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:new-teams\r\nDTSTART;TZID=Europe/London:20261022T090000\r\n"
+			. "DTEND;TZID=Europe/London:20261022T093000\r\nSUMMARY:Catch-up\r\n" . ICal::ONLINE_MEETING . ":teams\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+		$event = ICal::parse($ics)->VEVENT;
+		$this->assertSame(['isOnlineMeeting' => true, 'onlineMeetingProvider' => 'teamsForBusiness'],
+			array_intersect_key($this->converter->fromEvent($event, 'teamsForBusiness'), ['isOnlineMeeting' => 1, 'onlineMeetingProvider' => 1]));
+		// A calendar that can't make online meetings: an ordinary event.
+		$this->assertArrayNotHasKey('isOnlineMeeting', $this->converter->fromEvent($event));
+	}
+
 	public function testAllDayEvent(): void {
 		$cal = $this->converter->toCalendar(Fixtures::json('graph/event-allday.json'));
 		$event = $cal->VEVENT;

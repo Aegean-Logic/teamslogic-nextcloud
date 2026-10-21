@@ -48,7 +48,7 @@ class OAuthService {
 	/**
 	 * The provider's sign-in page for $user.
 	 *
-	 * @param array{mail?: bool, calendar?: bool, contacts?: bool} $features
+	 * @param array{mail?: bool, calendar?: bool, contacts?: bool, tasks?: bool} $features
 	 * @return array{url: string, state: string, redirectUri: string, scopes: list<string>}
 	 */
 	public function authorizationUrl(IUser $user, string $provider, array $features, bool $mailPossible): array {
@@ -68,6 +68,7 @@ class OAuthService {
 				'mail' => $mail,
 				'calendar' => (bool)($features['calendar'] ?? true),
 				'contacts' => (bool)($features['contacts'] ?? true),
+				'tasks' => (bool)($features['tasks'] ?? true),
 			],
 		], JSON_THROW_ON_ERROR));
 
@@ -168,6 +169,7 @@ class OAuthService {
 		$connection->setMailEnabled($mail);
 		$connection->setCalendarEnabled((bool)($features['calendar'] ?? true));
 		$connection->setContactsEnabled((bool)($features['contacts'] ?? true));
+		$connection->setTasksEnabled((bool)($features['tasks'] ?? true));
 		$connection->setLastError(null);
 		if ($isNew) {
 			$connection->setCreatedAt($this->time->getTime());
@@ -228,7 +230,7 @@ class OAuthService {
 			'refresh_token' => $this->crypto->decrypt($refresh),
 		];
 		if ($provider === Connection::MICROSOFT) {
-			$form['scope'] = implode(' ', Providers::GRAPH_SCOPES);
+			$form['scope'] = implode(' ', Providers::graphRefreshScopes($connection->getScopeList()));
 		}
 		$tokens = $this->tokenRequest($provider, $form);
 		$this->storeTokens($connection, $tokens);

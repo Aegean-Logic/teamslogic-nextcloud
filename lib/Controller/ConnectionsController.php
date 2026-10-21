@@ -46,8 +46,8 @@ class ConnectionsController extends OCSController {
 	#[NoAdminRequired]
 	#[UserRateLimit(limit: 20, period: 300)]
 	#[ApiRoute(verb: 'POST', url: '/api/v1/connect/{provider}', requirements: ['provider' => 'google|microsoft'])]
-	public function connect(string $provider, ?bool $mail = null, ?bool $calendar = null, ?bool $contacts = null): DataResponse {
-		$features = array_filter(['mail' => $mail, 'calendar' => $calendar, 'contacts' => $contacts], static fn ($v) => $v !== null);
+	public function connect(string $provider, ?bool $mail = null, ?bool $calendar = null, ?bool $contacts = null, ?bool $tasks = null): DataResponse {
+		$features = array_filter(['mail' => $mail, 'calendar' => $calendar, 'contacts' => $contacts, 'tasks' => $tasks], static fn ($v) => $v !== null);
 		try {
 			return new DataResponse($this->connections->startConnect($this->user(), $provider, $features));
 		} catch (OAuthException $e) {
@@ -61,11 +61,21 @@ class ConnectionsController extends OCSController {
 		return new DataResponse(array_map(static fn (Connection $c) => $c->jsonSerialize(), $this->connections->list($this->user()->getUID())));
 	}
 
-	/** Switches mail, calendar or contacts on or off. */
+	/**
+	 * The synced calendars, by local calendar URI, and the online meeting each can add to a new
+	 * event ("teams", "meet" or null). An event asks for one with X-TEAMSLOGIC-ONLINE-MEETING.
+	 */
+	#[NoAdminRequired]
+	#[ApiRoute(verb: 'GET', url: '/api/v1/calendars')]
+	public function calendars(): DataResponse {
+		return new DataResponse($this->connections->calendars($this->user()->getUID()));
+	}
+
+	/** Switches mail, calendar, contacts or tasks on or off. */
 	#[NoAdminRequired]
 	#[ApiRoute(verb: 'PATCH', url: '/api/v1/connections/{id}', requirements: ['id' => '\d+'])]
-	public function update(int $id, ?bool $mail = null, ?bool $calendar = null, ?bool $contacts = null): DataResponse {
-		$features = array_filter(['mail' => $mail, 'calendar' => $calendar, 'contacts' => $contacts], static fn ($v) => $v !== null);
+	public function update(int $id, ?bool $mail = null, ?bool $calendar = null, ?bool $contacts = null, ?bool $tasks = null): DataResponse {
+		$features = array_filter(['mail' => $mail, 'calendar' => $calendar, 'contacts' => $contacts, 'tasks' => $tasks], static fn ($v) => $v !== null);
 		try {
 			return new DataResponse($this->connections->update($this->user()->getUID(), $id, $features)->jsonSerialize());
 		} catch (DoesNotExistException) {

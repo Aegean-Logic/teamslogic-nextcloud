@@ -6,9 +6,9 @@
 <info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
 	<id>teamslogic</id>
 	<name>TeamsLogic</name>
-	<summary>Google and Microsoft 365 calendars, contacts and mail in Nextcloud</summary>
-	<description><![CDATA[TeamsLogic for Nextcloud is the server side of the TeamsLogic desktop app. Each user connects their Google or Microsoft 365 account once: their calendars and address books sync both ways with Nextcloud (every few minutes, or on demand), and the same sign-in sets up the account in Nextcloud Mail.]]></description>
-	<version>0.1.1</version>
+	<summary>Google and Microsoft 365 calendars, contacts, tasks and mail in Nextcloud</summary>
+	<description><![CDATA[TeamsLogic for Nextcloud is the server side of the TeamsLogic desktop app. Each user connects their Google or Microsoft 365 account once: their calendars, address books and task lists (Microsoft To Do, Google Tasks) sync both ways with Nextcloud (every few minutes, or on demand), and the same sign-in sets up the account in Nextcloud Mail.]]></description>
+	<version>0.2.0</version>
 	<licence>agpl</licence>
 	<author homepage="https://www.aegeanlogic.co.uk">Aegean Logic</author>
 	<namespace>TeamsLogic</namespace>

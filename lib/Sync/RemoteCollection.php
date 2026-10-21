@@ -20,6 +20,8 @@ final class RemoteCollection {
 		public readonly ?string $color = null,
 		/** The calendar's time zone (Google), for times sent without one. */
 		public readonly ?string $timeZone = null,
+		/** The online meetings the provider can add to its events: Graph's provider name (teamsForBusiness…) or "hangoutsMeet". */
+		public readonly ?string $meetingProvider = null,
 	) {
 	}
 }

@@ -9,6 +9,9 @@ each user connect their **Google** or **Microsoft 365** account once:
   the sync interval (5 minutes by default) or straight away with "Sync now".
 - **Contacts** sync both ways: Google Contacts becomes "Google · Contacts"; each Outlook contact
   folder becomes an address book ("Outlook · Contacts", …).
+- **Tasks** sync both ways: each Microsoft To Do or Google Tasks list becomes a Nextcloud task
+  list ("Outlook · Tasks", "Google · My Tasks"), which the Nextcloud Tasks app, phones and
+  TeamsLogic's To Do app use.
 - **Mail**: the same sign-in sets up the account in [Nextcloud Mail](https://apps.nextcloud.com/apps/mail)
   (IMAP/SMTP with OAuth 2, no app password), so a user connects once for mail, calendar and contacts.
 
@@ -35,13 +38,15 @@ than one address, set `overwritehost` / `overwriteprotocol` (or `overwrite.cli.u
 ### Google Cloud
 
 1. In the [Google Cloud console](https://console.cloud.google.com/), create (or pick) a project.
-2. **APIs & Services › Library**: enable the **Google Calendar API** and the **People API**
+2. **APIs & Services › Library**: enable the **Google Calendar API**, the **People API** and the
+   **Google Tasks API**
    (and the **Gmail API** if mail is on; IMAP needs no API, but Google lists Gmail scopes under it).
 3. **OAuth consent screen**: user type *External* (or *Internal* for a Workspace-only setup). Add
    the scopes:
    - `openid`, `email` (to know which account was connected)
    - `https://www.googleapis.com/auth/calendar`
    - `https://www.googleapis.com/auth/contacts`
+   - `https://www.googleapis.com/auth/tasks`
    - `https://mail.google.com/` (only with "Also connect mail")
 
    Calendar, contacts and mail are *sensitive / restricted* scopes: until Google verifies the app,
@@ -60,7 +65,8 @@ than one address, set `overwritehost` / `overwriteprotocol` (or `overwrite.cli.u
 2. **Certificates & secrets › New client secret**. Enter the secret's *Value* (not its ID) in the
    TeamsLogic settings, with the **Application (client) ID**. Note when the secret expires.
 3. **API permissions › Add a permission**, all **delegated**:
-   - Microsoft Graph: `Calendars.ReadWrite`, `Contacts.ReadWrite`, `User.Read`, `offline_access`
+   - Microsoft Graph: `Calendars.ReadWrite`, `Contacts.ReadWrite`, `Tasks.ReadWrite`, `User.Read`,
+     `offline_access`
    - Only with "Also connect mail", also under Microsoft Graph: `IMAP.AccessAsUser.All`,
      `SMTP.Send` (requested as `https://outlook.office.com/…`, which is what Exchange accepts)
 
@@ -87,8 +93,9 @@ All under `/ocs/v2.php/apps/teamslogic/api/v1`, signed in as the user (app passw
 | Request | What it does |
 | --- | --- |
 | `POST /connect/{google\|microsoft}` (`mail`, `calendar`, `contacts`: optional booleans) | Returns `{url, state, redirectUri, scopes, mail}`. Open `url` in a browser; the provider sends the user to `/apps/teamslogic/oauth/{provider}`, which stores the account, sets up Mail, queues the first sync and shows "Connected… you can close this window". 412 if the admin hasn't set the provider up. |
-| `GET /connections` | `[{id, provider, email, mail, calendar, contacts, mailAccountId, lastSync, lastError}]` (`lastSync`: Unix time) |
-| `PATCH /connections/{id}` (`mail`, `calendar`, `contacts`) | Switches features. Off: calendars/contacts stop syncing and keep their local copies; mail removes the Mail account. Mail on for an account connected without mail answers 409 `{reconnect: true}`: connect again with mail. |
+| `GET /connections` | `[{id, provider, email, mail, calendar, contacts, tasks, tasksGranted, mailAccountId, lastSync, lastError}]` (`lastSync`: Unix time; `tasksGranted` false: connected before tasks were added, connect again to sync them) |
+| `GET /calendars` | The synced calendars: `[{connectionId, provider, email, calendarUri, name, readOnly, onlineMeeting}]`, where `onlineMeeting` is `teams`, `meet` or null: what the provider adds to a new event that asks for one (below). |
+| `PATCH /connections/{id}` (`mail`, `calendar`, `contacts`, `tasks`) | Switches features. Off: calendars/contacts stop syncing and keep their local copies; mail removes the Mail account. Mail on for an account connected without mail answers 409 `{reconnect: true}`: connect again with mail. |
 | `POST /connections/{id}/sync` | Syncs now; answers the connection plus `summary: {pulled, pushed, conflicts, errors}`. |
 | `DELETE /connections/{id}?keepData=0\|1` | Disconnects: revokes the Google grant, removes the Mail account, and removes the synced calendars and address books (`keepData=1` leaves them as plain local ones). |
 
@@ -114,11 +121,28 @@ names the user, and only a hash of its random part is kept for 15 minutes and on
   remote copy said last round (ignoring DTSTAMP, LAST-MODIFIED, SEQUENCE, REV…); if a "changed"
   remote item still says the same, nothing is pulled, and a local edit made meanwhile is sent
   instead of being overwritten.
+- **Tasks**: Graph `/me/todo/lists/{id}/tasks/delta`; Google Tasks has no sync token, so a
+  list is asked for the tasks updated since the last round began (`updatedMin`, less a minute),
+  deleted ones included. Title, notes, due and start days, done (and when), importance
+  (`PRIORITY` 1/5/9), categories, a reminder; To Do's "waiting on others" and "deferred" are kept
+  in `X-TEAMSLOGIC-TODO-STATUS`; a Google subtask's parent comes across as `RELATED-TO`.
 - **Read-only** remote calendars (Google reader / free-busy, Outlook `canEdit: false`) sync one
   way; a local edit is undone at the next round.
 - A remote calendar or address book that's deleted takes its local copy with it.
 - Tables: `teamslogic_connections` (account, encrypted tokens, features, per-collection sync
   state, last sync, last error) and `teamslogic_sync_items` (local URI ⇄ remote id, both etags).
+
+### Teams and Meet meetings
+
+A new event in a synced calendar can ask the provider for an online meeting with
+`X-TEAMSLOGIC-ONLINE-MEETING:teams` (Outlook: `isOnlineMeeting` with the calendar's provider,
+usually `teamsForBusiness`) or `:meet` (Google: `conferenceData.createRequest`, `hangoutsMeet`).
+When it's pushed, the provider makes the meeting and the join link is written straight back into
+the Nextcloud copy (`X-TEAMSLOGIC-JOIN-URL`, a "Join online: …" line in the description, and
+the location if it was empty). Pulled events that already have a Teams or Meet meeting carry the
+same two properties. If the event's attendees are `SCHEDULE-AGENT=CLIENT`, the provider sends the
+invitations (Google with `sendUpdates=all`; Outlook always does) and Nextcloud doesn't.
+The join line isn't sent back to the provider, which keeps the link itself.
 
 ### What converts
 
@@ -128,6 +152,11 @@ names the user, and only a hash of its random part is kept for 15 minutes and on
 | Contacts | names, nickname, emails (home/work, primary), phones (mobile, home, work, fax, pager), addresses, organisation, title, birthday (with or without year), website, note, photo (Google's link one way; an embedded photo is uploaded) | names, nickname, three emails, mobile, business and home phones, home/business/other address, company, department, job title, birthday, web page, notes, categories, photo (both ways) |
 
 ## Limits
+
+- Tasks: To Do's steps (checklist items), recurrence and attachments stay in To Do; a subtask made
+  in Nextcloud becomes a top-level Google task; a list made in Nextcloud isn't created in To Do or
+  Google Tasks (make it there and it comes across). Accounts connected before tasks were added
+  need connecting again (Microsoft refuses a token for a permission the user hasn't granted).
 
 - **Graph events delta is a Graph beta endpoint.** Graph v1.0 has event delta only for a date
   range of the primary calendar, so `/me/calendars/{id}/events/delta` comes from `beta`. If

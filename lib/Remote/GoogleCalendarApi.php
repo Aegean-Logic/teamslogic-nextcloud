@@ -56,6 +56,7 @@ class GoogleCalendarApi implements RemoteApi {
 					!in_array($c['accessRole'] ?? 'reader', ['owner', 'writer'], true),
 					$c['backgroundColor'] ?? null,
 					$c['timeZone'] ?? null,
+					in_array('hangoutsMeet', (array)($c['conferenceProperties']['allowedConferenceSolutionTypes'] ?? []), true) ? 'hangoutsMeet' : null,
 				);
 			}
 			$url = isset($page['nextPageToken'])
@@ -136,7 +137,7 @@ class GoogleCalendarApi implements RemoteApi {
 		$master = ICal::masterOf($cal) ?? throw new RemoteException('No event in the calendar object');
 		$body = $this->converter($collection)->fromEvent($master);
 		$body['iCalUID'] = (string)$master->UID;
-		$created = $this->http->request('POST', self::BASE . '/calendars/' . rawurlencode($collection->id) . '/events', $body)['json'] ?? [];
+		$created = $this->http->request('POST', self::BASE . '/calendars/' . rawurlencode($collection->id) . '/events' . self::writeQuery($master), $body)['json'] ?? [];
 		$id = (string)($created['id'] ?? throw new RemoteException('Google returned no event id'));
 		$etag = $this->pushInstances($collection, $id, $cal) ?? (string)($created['etag'] ?? '');
 		return new RemoteItem($id, $etag);
@@ -146,7 +147,7 @@ class GoogleCalendarApi implements RemoteApi {
 		$cal = ICal::parse($local);
 		$master = ICal::masterOf($cal) ?? throw new RemoteException('No event in the calendar object');
 		$headers = $etag !== null && $etag !== '' ? ['If-Match' => $etag] : [];
-		$response = $this->http->request('PATCH', $this->eventUrl($collection, $id), $this->converter($collection)->fromEvent($master), $headers);
+		$response = $this->http->request('PATCH', $this->eventUrl($collection, $id) . self::writeQuery($master), $this->converter($collection)->fromEvent($master), $headers);
 		if ($response['status'] === 404 || $response['status'] === 410) {
 			throw new PreconditionFailedException('The event was deleted in Google', $response['status']);
 		}
@@ -179,6 +180,14 @@ class GoogleCalendarApi implements RemoteApi {
 		}
 		$master = $this->http->request('GET', $this->eventUrl($collection, $masterId))['json'] ?? [];
 		return isset($master['etag']) ? (string)$master['etag'] : null;
+	}
+
+	/**
+	 * Query for inserts and changes: conference data (a Meet link) is read and written, and
+	 * Google sends the invitations when the client left them to the provider.
+	 */
+	private static function writeQuery(\Sabre\VObject\Component\VEvent $event): string {
+		return '?conferenceDataVersion=1&sendUpdates=' . (ICal::providerSchedules($event) ? 'all' : 'none');
 	}
 
 	private function eventUrl(RemoteCollection $collection, string $id): string {

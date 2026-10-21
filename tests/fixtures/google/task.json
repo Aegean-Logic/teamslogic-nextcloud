@@ -1,0 +1,15 @@
+{
+  "kind": "tasks#task",
+  "id": "MTY5ODk0NjQ0NzA0MjU2ODc0NTI6MDoxNjk",
+  "etag": "\"LTE4OTk0NTMyNzQ\"",
+  "title": "Send the quarterly figures",
+  "updated": "2026-10-20T15:04:05.000Z",
+  "selfLink": "https://www.googleapis.com/tasks/v1/lists/MDk4NzY1/tasks/MTY5ODk0NjQ0NzA0MjU2ODc0NTI6MDoxNjk",
+  "parent": "TUFTVEVSVEFTSw",
+  "position": "00000000000000000001",
+  "notes": "Include the hiring plan.\nCopy finance.",
+  "status": "completed",
+  "due": "2026-10-24T00:00:00.000Z",
+  "completed": "2026-10-21T09:30:00.000Z",
+  "links": []
+}

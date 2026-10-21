@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace OCA\TeamsLogic\Db;
 
 use JsonSerializable;
+use OCA\TeamsLogic\OAuth\Providers;
 use OCP\AppFramework\Db\Entity;
 
 /**
@@ -35,6 +36,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setCalendarEnabled(bool $calendarEnabled)
  * @method bool|null getContactsEnabled()
  * @method void setContactsEnabled(bool $contactsEnabled)
+ * @method bool|null getTasksEnabled()
+ * @method void setTasksEnabled(bool $tasksEnabled)
  * @method int|null getMailAccountId()
  * @method void setMailAccountId(?int $mailAccountId)
  * @method string|null getSyncState()
@@ -61,6 +64,7 @@ class Connection extends Entity implements JsonSerializable {
 	protected $mailEnabled = false;
 	protected $calendarEnabled = true;
 	protected $contactsEnabled = true;
+	protected $tasksEnabled = true;
 	protected $mailAccountId;
 	protected $syncState;
 	protected $lastSync = 0;
@@ -72,6 +76,7 @@ class Connection extends Entity implements JsonSerializable {
 		$this->addType('mailEnabled', 'boolean');
 		$this->addType('calendarEnabled', 'boolean');
 		$this->addType('contactsEnabled', 'boolean');
+		$this->addType('tasksEnabled', 'boolean');
 		$this->addType('mailAccountId', 'integer');
 		$this->addType('lastSync', 'integer');
 		$this->addType('createdAt', 'integer');
@@ -101,6 +106,9 @@ class Connection extends Entity implements JsonSerializable {
 			'mail' => (bool)$this->getMailEnabled(),
 			'calendar' => (bool)$this->getCalendarEnabled(),
 			'contacts' => (bool)$this->getContactsEnabled(),
+			'tasks' => (bool)$this->getTasksEnabled() && Providers::grantsTasks($this->getProvider(), $this->getScopeList()),
+			// False for an account connected before tasks were added: connect it again to sync tasks
+			'tasksGranted' => Providers::grantsTasks($this->getProvider(), $this->getScopeList()),
 			'mailAccountId' => $this->getMailAccountId(),
 			'lastSync' => $this->getLastSync() ?: null,
 			'lastError' => $this->getLastError() ?: null,

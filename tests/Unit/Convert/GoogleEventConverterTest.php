@@ -71,10 +71,33 @@ class GoogleEventConverterTest extends TestCase {
 		$this->assertSame(['email' => 'bob@example.org', 'responseStatus' => 'needsAction', 'optional' => true], $body['attendees'][2]);
 		$this->assertTrue($body['attendees'][3]['resource']);
 
+		// The Meet link stays Google's: our join line isn't sent back, and no new Meet is asked for.
+		$this->assertSame("Agenda:\n1. Numbers\n2. Hiring", $body['description']);
+		$this->assertSame('Board room', $body['location']);
+		$this->assertArrayNotHasKey('conferenceData', $body);
+
 		// Reading what we'd send gives the same event back.
 		$again = $this->converter->toCalendar($body + ['id' => 'x', 'iCalUID' => '7l4bq0abc123single@google.com']);
 		$this->assertSame((string)$cal->VEVENT->DTSTART, (string)$again->VEVENT->DTSTART);
-		$this->assertSame((string)$cal->VEVENT->DESCRIPTION, (string)$again->VEVENT->DESCRIPTION);
+		$this->assertSame("Agenda:\n1. Numbers\n2. Hiring", (string)$again->VEVENT->DESCRIPTION);
+	}
+
+	public function testMeetEventIsMarked(): void {
+		$event = $this->converter->toCalendar(Fixtures::json('google/event-single.json'))->VEVENT;
+		$this->assertSame('meet', (string)$event->{ICal::ONLINE_MEETING});
+		$this->assertSame('https://meet.google.com/abc-defg-hij', (string)$event->{ICal::JOIN_URL});
+	}
+
+	public function testNewEventAsksForAMeet(): void {
+		$ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nUID:new-meet\r\nDTSTART:20261022T090000Z\r\nDTEND:20261022T093000Z\r\n"
+			. "SUMMARY:Catch-up\r\n" . ICal::ONLINE_MEETING . ":meet\r\nORGANIZER:mailto:gaz@example.com\r\n"
+			. "ATTENDEE;SCHEDULE-AGENT=CLIENT;PARTSTAT=NEEDS-ACTION:mailto:alice@example.org\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n";
+		$event = ICal::parse($ics)->VEVENT;
+		$body = $this->converter->fromEvent($event);
+		$this->assertSame('hangoutsMeet', $body['conferenceData']['createRequest']['conferenceSolutionKey']['type']);
+		$this->assertSame($body['conferenceData']['createRequest']['requestId'], $this->converter->fromEvent($event)['conferenceData']['createRequest']['requestId'], 'the same request id each time');
+		$this->assertTrue(ICal::providerSchedules($event));
+		$this->assertSame([['email' => 'alice@example.org', 'responseStatus' => 'needsAction']], $body['attendees']);
 	}
 
 	public function testAllDayEvent(): void {

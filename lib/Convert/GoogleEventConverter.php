@@ -161,6 +161,9 @@ final class GoogleEventConverter {
 		}
 
 		ICal::addJoinLink($event, $this->joinUrl($e));
+		if (($e['conferenceData']['conferenceSolution']['key']['type'] ?? null) === 'hangoutsMeet' || isset($e['hangoutLink'])) {
+			$event->{ICal::ONLINE_MEETING} = 'meet';
+		}
 		return $event;
 	}
 
@@ -176,8 +179,8 @@ final class GoogleEventConverter {
 		$end = ICal::end($event, $this->calendarZone);
 		$body = [
 			'summary' => ICal::text($event, 'SUMMARY') ?? '',
-			'description' => ICal::text($event, 'DESCRIPTION') ?? '',
-			'location' => ICal::text($event, 'LOCATION') ?? '',
+			'description' => ICal::descriptionForProvider($event),
+			'location' => ICal::locationForProvider($event),
 			'start' => $this->googleTime($start['at'], $start['allDay']),
 			'end' => $this->googleTime($end['at'], $end['allDay']),
 		];
@@ -232,6 +235,15 @@ final class GoogleEventConverter {
 					array_slice($reminders, 0, 5),
 				),
 			];
+		}
+
+		if (strtolower(ICal::text($event, ICal::ONLINE_MEETING) ?? '') === 'meet' && ICal::text($event, ICal::JOIN_URL) === null) {
+			// Ask Google for a Meet link (needs conferenceDataVersion=1 on the request). The same
+			// request id for the same event, so asking twice makes one meeting.
+			$body['conferenceData'] = ['createRequest' => [
+				'requestId' => 'teamslogic-' . substr(sha1((string)$event->UID . "\0" . (string)($event->{'RECURRENCE-ID'} ?? '')), 0, 24),
+				'conferenceSolutionKey' => ['type' => 'hangoutsMeet'],
+			]];
 		}
 		return array_filter($body, static fn ($v) => $v !== null);
 	}

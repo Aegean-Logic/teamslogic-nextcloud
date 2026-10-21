@@ -26,6 +26,13 @@ final class ICal {
 	public const PRODID = '-//Aegean Logic//TeamsLogic for Nextcloud//EN';
 	/** The line we add to a description for a meeting's join link. */
 	public const JOIN_PREFIX = 'Join online: ';
+	/** The meeting's join link, as the provider gave it. */
+	public const JOIN_URL = 'X-TEAMSLOGIC-JOIN-URL';
+	/**
+	 * An online meeting the provider makes: "teams" (Microsoft) or "meet" (Google). Set by the
+	 * client on a new event to ask for one; set on pulled events that have one.
+	 */
+	public const ONLINE_MEETING = 'X-TEAMSLOGIC-ONLINE-MEETING';
 
 	public static function newCalendar(): VCalendar {
 		$cal = new VCalendar();
@@ -170,6 +177,7 @@ final class ICal {
 		if ($url === null || $url === '') {
 			return;
 		}
+		self::setText($event, self::JOIN_URL, $url);
 		$description = self::text($event, 'DESCRIPTION') ?? '';
 		if (!str_contains($description, $url)) {
 			self::setText($event, 'DESCRIPTION', ltrim($description . "\n\n" . self::JOIN_PREFIX . $url));
@@ -177,6 +185,38 @@ final class ICal {
 		if (self::text($event, 'LOCATION') === null) {
 			self::setText($event, 'LOCATION', $url);
 		}
+	}
+
+	/**
+	 * The description without the join line addJoinLink() added, for sending back: the provider
+	 * keeps the link itself.
+	 */
+	public static function descriptionForProvider(VEvent $event): string {
+		$description = self::text($event, 'DESCRIPTION') ?? '';
+		$url = self::text($event, self::JOIN_URL);
+		if ($url !== null) {
+			$description = str_replace(self::JOIN_PREFIX . $url, '', $description);
+		}
+		return trim($description);
+	}
+
+	/** The location, unless it's only the join link addJoinLink() put there. */
+	public static function locationForProvider(VEvent $event): string {
+		$location = self::text($event, 'LOCATION') ?? '';
+		return $location === self::text($event, self::JOIN_URL) ? '' : $location;
+	}
+
+	/**
+	 * Whether the provider should send the invitations: the client marked the attendees
+	 * SCHEDULE-AGENT=CLIENT, so Nextcloud doesn't send its own.
+	 */
+	public static function providerSchedules(VEvent $event): bool {
+		foreach ($event->select('ATTENDEE') as $attendee) {
+			if (isset($attendee['SCHEDULE-AGENT']) && strtoupper((string)$attendee['SCHEDULE-AGENT']) === 'CLIENT') {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

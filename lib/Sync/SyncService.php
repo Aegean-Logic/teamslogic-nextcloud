@@ -11,6 +11,7 @@ namespace OCA\TeamsLogic\Sync;
 
 use OCA\DAV\CalDAV\CalDavBackend;
 use OCA\DAV\CardDAV\CardDavBackend;
+use OCA\TeamsLogic\Convert\ICal;
 use OCA\TeamsLogic\Convert\UnsupportedException;
 use OCA\TeamsLogic\Db\Connection;
 use OCA\TeamsLogic\Db\ConnectionMapper;
@@ -116,6 +117,7 @@ class SyncService {
 					}
 					$cs['name'] = $collection->name;
 					$cs['readOnly'] = $collection->readOnly;
+					$cs['meeting'] = $collection->meetingProvider;
 					$cs = $this->syncCollection($connection, $api, $store, $collection, $cs, $summary);
 				} catch (Throwable $e) {
 					$this->logger->warning('TeamsLogic: sync of {name} failed: ' . $e->getMessage(), ['name' => $collection->name, 'exception' => $e]);
@@ -265,8 +267,9 @@ class SyncService {
 					break;
 				}
 				$created = $ctx->api->create($ctx->collection, $local['data']);
-				[$hash, $etag] = $this->remoteState($ctx, $created->id, $local['data']);
-				$this->saveItem($ctx, $created->id, (string)$action->localUri, $etag ?? $created->etag, $local['etag'], $hash);
+				[$hash, $etag, $text] = $this->remoteState($ctx, $created->id, $local['data']);
+				$localEtag = $this->takeJoinLink($ctx, (string)$action->localUri, $local, $text);
+				$this->saveItem($ctx, $created->id, (string)$action->localUri, $etag ?? $created->etag, $localEtag, $hash);
 				$summary['pushed']++;
 				break;
 
@@ -277,8 +280,9 @@ class SyncService {
 				}
 				try {
 					$updated = $ctx->api->update($ctx->collection, $remoteId, $knownItem?->getRemoteEtag(), $local['data']);
-					[$hash, $etag] = $this->remoteState($ctx, $remoteId, $local['data']);
-					$this->saveItem($ctx, $remoteId, (string)$action->localUri, $etag ?? $updated->etag, $local['etag'], $hash);
+					[$hash, $etag, $text] = $this->remoteState($ctx, $remoteId, $local['data']);
+					$localEtag = $this->takeJoinLink($ctx, (string)$action->localUri, $local, $text);
+					$this->saveItem($ctx, $remoteId, (string)$action->localUri, $etag ?? $updated->etag, $localEtag, $hash);
 					$summary['pushed']++;
 				} catch (PreconditionFailedException) {
 					$this->remoteWins($ctx, $remoteId, (string)$action->localUri, $summary);
@@ -328,19 +332,34 @@ class SyncService {
 	 * The remote item as it is just after a push: its content hash (as the next pull will see
 	 * it) and etag. Nulls if it can't be read now; the next pull then compares by etag only.
 	 *
-	 * @return array{0: ?string, 1: ?string}
+	 * @return array{0: ?string, 1: ?string, 2: ?string} hash, etag, and the item as local text
 	 */
 	private function remoteState(SyncContext $ctx, string $remoteId, string $local): array {
 		try {
 			$item = $ctx->api->fetch($ctx->collection, $remoteId);
 			if ($item === null) {
-				return [null, null];
+				return [null, null, null];
 			}
-			return [ContentHash::of($ctx->api->toLocal($ctx->collection, $item, $local)), $item->etag];
+			$text = $ctx->api->toLocal($ctx->collection, $item, $local);
+			return [ContentHash::of($text), $item->etag, $text];
 		} catch (Throwable $e) {
 			$this->logger->info('TeamsLogic: could not re-read {id} after pushing: ' . $e->getMessage(), ['id' => $remoteId]);
-			return [null, null];
+			return [null, null, null];
 		}
+	}
+
+	/**
+	 * A push that asked the provider for an online meeting (Teams, Meet) comes back with its join
+	 * link: the local copy takes the provider's version at once, so the link shows straight away.
+	 * Returns the local etag afterwards.
+	 *
+	 * @param array{data: string, etag: string} $local
+	 */
+	private function takeJoinLink(SyncContext $ctx, string $uri, array $local, ?string $remoteText): string {
+		if ($remoteText === null || !str_contains($remoteText, ICal::JOIN_URL . ':') || str_contains($local['data'], ICal::JOIN_URL . ':')) {
+			return $local['etag'];
+		}
+		return $ctx->store->put($ctx->localId, $uri, $remoteText);
 	}
 
 	/** @param string|false|null $remoteHash false keeps the recorded hash */
@@ -394,7 +413,11 @@ class SyncService {
 	}
 
 	private function store(string $kind): LocalStore {
-		return $kind === SyncItem::CALENDAR ? new LocalCalendarStore($this->calDav) : new LocalAddressBookStore($this->cardDav);
+		return match ($kind) {
+			SyncItem::CALENDAR => new LocalCalendarStore($this->calDav, 'VEVENT'),
+			SyncItem::TASKS => new LocalCalendarStore($this->calDav, 'VTODO'),
+			default => new LocalAddressBookStore($this->cardDav),
+		};
 	}
 
 	public static function collectionUri(Connection $connection, string $kind, string $remoteId): string {

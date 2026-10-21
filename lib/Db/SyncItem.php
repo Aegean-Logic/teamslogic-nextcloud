@@ -37,6 +37,7 @@ use OCP\AppFramework\Db\Entity;
 class SyncItem extends Entity {
 	public const CALENDAR = 'calendar';
 	public const CONTACTS = 'contacts';
+	public const TASKS = 'tasks';
 
 	protected $connectionId = 0;
 	protected $kind = '';

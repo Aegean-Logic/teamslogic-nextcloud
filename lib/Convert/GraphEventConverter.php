@@ -155,28 +155,38 @@ final class GraphEventConverter {
 			ICal::addReminder($event, (int)($e['reminderMinutesBeforeStart'] ?? 15));
 		}
 		ICal::addJoinLink($event, $e['onlineMeeting']['joinUrl'] ?? ($e['onlineMeetingUrl'] ?? null));
+		if (!empty($e['isOnlineMeeting'])) {
+			$event->{ICal::ONLINE_MEETING} = 'teams';
+		}
 		return $event;
 	}
 
 	/**
 	 * The Graph body for a VEVENT (master or exception).
 	 *
+	 * @param string|null $meetingProvider the calendar's online meeting provider (teamsForBusiness…),
+	 *                                     used when the event asks for a meeting (ICal::ONLINE_MEETING)
 	 * @return array<string, mixed>
 	 * @throws UnsupportedException for a rule Outlook has no pattern for
 	 */
-	public function fromEvent(VEvent $event): array {
+	public function fromEvent(VEvent $event, ?string $meetingProvider = null): array {
 		$utc = new DateTimeZone('UTC');
 		$start = ICal::start($event, $utc);
 		$end = ICal::end($event, $utc);
 		$allDay = $start['allDay'];
 		$body = [
 			'subject' => ICal::text($event, 'SUMMARY') ?? '',
-			'body' => ['contentType' => 'text', 'content' => ICal::text($event, 'DESCRIPTION') ?? ''],
+			'body' => ['contentType' => 'text', 'content' => ICal::descriptionForProvider($event)],
 			'start' => $this->graphTime($start['at'], $allDay),
 			'end' => $this->graphTime($end['at'], $allDay),
 			'isAllDay' => $allDay,
-			'location' => ['displayName' => ICal::text($event, 'LOCATION') ?? ''],
+			'location' => ['displayName' => ICal::locationForProvider($event)],
 		];
+		if ($meetingProvider !== null && ICal::text($event, ICal::ONLINE_MEETING) !== null && !isset($event->{'RECURRENCE-ID'})) {
+			// Outlook makes the Teams (or Skype) meeting and its link.
+			$body['isOnlineMeeting'] = true;
+			$body['onlineMeetingProvider'] = $meetingProvider;
+		}
 
 		if (!isset($event->{'RECURRENCE-ID'}) && isset($event->RRULE)) {
 			$body['recurrence'] = GraphRecurrence::fromRrule((string)$event->RRULE, $start['at'], $allDay);

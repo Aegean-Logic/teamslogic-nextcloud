@@ -12,7 +12,7 @@ namespace OCA\TeamsLogic\Service;
 use OCA\TeamsLogic\Db\Connection;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Utility\ITimeFactory;
-use OCP\Config\IUserConfig;
+use OCP\IConfig;
 use OCP\IUser;
 use OCP\Security\ICrypto;
 use OCP\Server;
@@ -44,7 +44,7 @@ class MailSetup {
 		private IAppManager $appManager,
 		private ICrypto $crypto,
 		private ITimeFactory $time,
-		private IUserConfig $userConfig,
+		private IConfig $config,
 		private LoggerInterface $logger,
 	) {
 	}
@@ -130,8 +130,10 @@ class MailSetup {
 					$user->getUID(), 'xoauth2',
 				);
 				$mailAccount = $account->getMailAccount();
-				// Mail syncs the accounts of people who've used it lately; count this as a use.
-				$this->userConfig->setValueString($user->getUID(), 'mail', 'ui-heartbeat', (string)$this->time->getTime());
+				// Mail syncs the accounts of people who've used it lately; count this as a use. Written as
+				// Mail writes it (IConfig, an untyped value): a typed string makes Mail's own write of
+				// it fail with a type conflict, and with it every mailbox sync.
+				$this->config->setUserValue($user->getUID(), 'mail', 'ui-heartbeat', (string)$this->time->getTime());
 			}
 			$mailAccount->setOauthAccessToken($this->crypto->encrypt($accessToken));
 			$mailAccount->setOauthRefreshToken($this->crypto->encrypt($refreshToken));
